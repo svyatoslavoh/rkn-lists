@@ -4861,6 +4861,7 @@ api.open-meteo.com
 api.openai.com
 api.pwnedpasswords.com
 api.radarr.video
+api.telegram.org
 api.themoviedb.org
 api.turbovpn.co
 api174.ru
@@ -12419,6 +12420,7 @@ comleon.ru
 commandingplatform.shop
 commandluxerixsoftware.com
 commark-service.ru
+comments.app
 comments.ua
 commerce.gov
 commerceasset.com
@@ -12614,6 +12616,7 @@ cordobaband.com
 cordvo.ru
 core-alpha-amp.top
 core-one-amp.top
+core.telegram.org
 corefy.com
 corelfilm.online
 coremarketoptionspro.com
@@ -20619,6 +20622,7 @@ fr.sotsg.ru
 fr.thisvid.com
 fr.twatis.com
 fr65.biz
+fragment.com
 fragmentfilm.de
 fragonchik.ru
 fram-agro.com
@@ -23639,6 +23643,7 @@ grantassetfundbots.com
 grantstruetales.ru
 granulla.site
 granumm.com
+graph.org
 graph.whatsapp.com
 graph.whatsapp.net
 graphicstyles.org
@@ -56564,6 +56569,7 @@ teleportal.ua
 teleportalworld.com
 teleprogramma-film.site
 telesco.pe
+telescope.pe
 telescopow.net
 teleskopov.net
 teleskopow.net
@@ -56853,6 +56859,7 @@ tgp.erito.com
 tgp.mennetwork.com
 tgp.realitydudesnetwork.com
 tgp.transangelsnetwork.com
+tgpublisher.com
 tgpush.ru
 tgs.org.tr
 tgscanner.ru
