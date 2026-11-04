@@ -7,12 +7,14 @@
 Всё нормализуется, фильтруется от казино/взрослого/фармы, дедуплицируется.
 """
 import ipaddress
+import json
 import re
 import sys
 import urllib.request
 
 REF_DOMAINS = "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/domains_all.lst"
 AF_IPS = "https://antifilter.download/list/ipsum.lst"
+GOOG_JSON = "https://www.gstatic.com/ipranges/goog.json"
 
 # то, что владелец просил не тащить: казино, ставки, взрослое, аптечная рассылка
 JUNK = re.compile(
@@ -86,6 +88,34 @@ golosameriki.com
 currenttime.tv
 torproject.org
 github.io
+accounts.google.com
+myaccount.google.com
+accounts.youtube.com
+oauth2.googleapis.com
+www.googleapis.com
+googleapis.com
+gstatic.com
+www.gstatic.com
+ssl.gstatic.com
+gvt1.com
+gvt2.com
+gvt3.com
+dl.google.com
+android.clients.google.com
+play.google.com
+devices.google.com
+g.co
+firebaseinstallations.googleapis.com
+fcm.googleapis.com
+googleusercontent.com
+google-analytics.com
+googletagmanager.com
+youtubei.googleapis.com
+youtube.com
+yt3.ggpht.com
+i.ytimg.com
+google.com
+google.ru
 """.strip().split()
 
 DOMAIN_RE = re.compile(r"^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
@@ -137,6 +167,24 @@ def main():
             doms.add(d)
             curated_added += 1
 
+    print("качаю подсети Google…", flush=True)
+    goog_nets = []
+    try:
+        data = json.loads(fetch(GOOG_JSON))
+        for pfx in data.get("prefixes") or []:
+            cidr = pfx.get("ipv4Prefix") or pfx.get("ipv6Prefix")
+            if not cidr:
+                continue
+            try:
+                net = ipaddress.ip_network(cidr, strict=False)
+            except ValueError:
+                continue
+            if net.version == 4:
+                goog_nets.append(net)
+        print(f"  диапазонов Google: {len(goog_nets)}", flush=True)
+    except Exception as e:
+        print("  не удалось получить диапазоны Google:", e, flush=True)
+
     print("качаю подсети…", flush=True)
     ips_raw = fetch(AF_IPS).splitlines()
     nets = set()
@@ -151,6 +199,8 @@ def main():
         if net.version != 4 or net.is_private or net.is_loopback or net.is_link_local:
             continue
         nets.add(net)
+
+    nets.update(goog_nets)
 
     def write(name, items):
         path = f"{out_dir}/{name}"

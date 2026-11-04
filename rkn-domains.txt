@@ -2591,6 +2591,8 @@ accords-land.top
 accordtt.ru
 account.proton.me
 account.wbgames.com
+accounts.google.com
+accounts.youtube.com
 accruebrokerlimited.com
 accruelimited.com
 accryosurgery.org
@@ -4364,6 +4366,7 @@ andrialog.blogspot.com
 androchem.vip
 android-apk-free.ru
 android-vpn.top
+android.clients.google.com
 android.dailydownloaded.com
 androidcorpo.com
 androidflash.ru
@@ -4861,7 +4864,6 @@ api.open-meteo.com
 api.openai.com
 api.pwnedpasswords.com
 api.radarr.video
-api.telegram.org
 api.themoviedb.org
 api.turbovpn.co
 api174.ru
@@ -12420,7 +12422,6 @@ comleon.ru
 commandingplatform.shop
 commandluxerixsoftware.com
 commark-service.ru
-comments.app
 comments.ua
 commerce.gov
 commerceasset.com
@@ -12616,7 +12617,6 @@ cordobaband.com
 cordvo.ru
 core-alpha-amp.top
 core-one-amp.top
-core.telegram.org
 corefy.com
 corelfilm.online
 coremarketoptionspro.com
@@ -14278,6 +14278,7 @@ development-team.ru
 devi-devi.ru
 deviantart.com
 device102.ru
+devices.google.com
 devilmind.club
 devilscrossroad.top
 devilsfilm.com
@@ -14771,6 +14772,7 @@ dl-20220303-753.anilib.top
 dl-cars.ru
 dl.ashoo.wtf
 dl.getchu.com
+dl.google.com
 dl.indapills.org
 dl.tailscale.com
 dl0.anilib.top
@@ -18940,6 +18942,7 @@ fcdardanet.com
 fcdynamo.com
 fckrkn.hhchhc.net
 fclass.space
+fcm.googleapis.com
 fcmaxima.ru
 fcmvd.ru
 fcolive.ru
@@ -19594,6 +19597,7 @@ firatnews.com
 fire-hopper.ru
 fire.ck.ua
 fireasian.com
+firebaseinstallations.googleapis.com
 firebit.club
 firebit.org
 firebit.pro
@@ -20622,7 +20626,6 @@ fr.sotsg.ru
 fr.thisvid.com
 fr.twatis.com
 fr65.biz
-fragment.com
 fragmentfilm.de
 fragonchik.ru
 fram-agro.com
@@ -21331,6 +21334,7 @@ g-sn.ru
 g-t-teslaxquiz2-ru-4.firebaseapp.com
 g.abcfilm.me
 g.ashoo.nl
+g.co
 g.dggepastore.ru
 g.do4a.me
 g.erkiss.im
@@ -23238,10 +23242,13 @@ goodtimeshop-biz.esti.city
 goodwater96.ru
 goodwillinc.com
 goodzips.com
+google-analytics.com
 google-dino.ru
 google.avitomoskva.ru
+google.com
 google.com.hk
 google.reska.xyz
+google.ru
 googleadservices.com
 googleapis.com
 googledino.ru
@@ -23643,7 +23650,6 @@ grantassetfundbots.com
 grantstruetales.ru
 granulla.site
 granumm.com
-graph.org
 graph.whatsapp.com
 graph.whatsapp.net
 graphicstyles.org
@@ -24125,6 +24131,7 @@ gvidi.ru
 gvk24.ru
 gvt1.com
 gvt2.com
+gvt3.com
 gw.ashoo.fun
 gwaramedia.com
 gx.ashoo.blue
@@ -38205,6 +38212,7 @@ my4.amarkets.company
 my9.a-markets.biz
 mya.animespirit.ru
 myaccesspointmarkets.com
+myaccount.google.com
 myagkieokna-kazan.ru
 myalkomir.ru
 myamazfit.ru
@@ -40767,6 +40775,7 @@ oasis.app
 oasisbasementwaterproofingdetroitmi.com
 oasisconf.kz
 oaskz.io
+oauth2.googleapis.com
 oavtomasle.ru
 oaxacaculinarytours.com
 ob-salon.ru
@@ -54479,6 +54488,7 @@ ssihplc.ru
 ssk-alpro.ru
 sskmorf.ru
 ssl-service.ru
+ssl.gstatic.com
 ssl.indapills.org
 sslivetv.com
 ssmp-orsk.ru
@@ -56569,7 +56579,6 @@ teleportal.ua
 teleportalworld.com
 teleprogramma-film.site
 telesco.pe
-telescope.pe
 telescopow.net
 teleskopov.net
 teleskopow.net
@@ -56859,7 +56868,6 @@ tgp.erito.com
 tgp.mennetwork.com
 tgp.realitydudesnetwork.com
 tgp.transangelsnetwork.com
-tgpublisher.com
 tgpush.ru
 tgs.org.tr
 tgscanner.ru
@@ -66653,6 +66661,7 @@ www.good-gay.tv
 www.goodbyekavkaz.org
 www.goodkino.biz
 www.goodreads.com
+www.googleapis.com
 www.goooool.org
 www.goorientalgirls.com
 www.gooverseas.com
@@ -66724,6 +66733,7 @@ www.grupoimplementar.com
 www.grupolena.com.br
 www.gruzotender.ru
 www.gspanel.net
+www.gstatic.com
 www.gtkleasing.ru
 www.guardabene.com
 www.guardianannuity.com
