@@ -20,10 +20,8 @@ GOOG_JSON = "https://www.gstatic.com/ipranges/goog.json"
 JUNK = re.compile(
     r"(casino|kazino|казино|bet[0-9]|betting|bookmaker|poker|slot[sz]?[0-9-]|jackpot|roulette|"
     r"gambl|1xbet|mostbet|melbet|leonbet|pin-up|pinup|vulkan|joycasino|playfortuna|"
-    r"porn|xxx|xhamster|xvideos|pornhub|brazzers|redtube|youporn|hentai|nude|escort|"
-    r"adult|sexy?[0-9-]|sex[0-9-]|intim|prostitut|"
     r"viagra|cialis|levitra|pharmacy|aptek|лекарств|"
-    r"dating|hookup|onlyfans|fansly|stripchat|bongacams|chaturbate|"
+    r"dating|hookup|"
     r"torrent|torlink|rutracker|nnmclub|rutor|"
     r"hydra|kraken|blacksprut|mega[-.]?dark|onion)",
     re.I,
@@ -116,6 +114,34 @@ yt3.ggpht.com
 i.ytimg.com
 google.com
 google.ru
+pornhub.com
+xvideos.com
+xhamster.com
+xnxx.com
+xhamster2.com
+redtube.com
+youporn.com
+brazzers.com
+spankbang.com
+eporner.com
+txxx.com
+beeg.com
+hqporner.com
+onlyfans.com
+fansly.com
+chaturbate.com
+stripchat.com
+bongacams.com
+livejasmin.com
+cam4.com
+javhd.com
+hentaihaven.xxx
+e-hentai.org
+nhentai.net
+rule34.xxx
+erome.com
+motherless.com
+literotica.com
 """.strip().split()
 
 DOMAIN_RE = re.compile(r"^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$")
