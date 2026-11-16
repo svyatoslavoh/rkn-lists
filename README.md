@@ -1,53 +1,61 @@
-# Списки заблокированных в РФ доменов и подсетей
+# Белые списки для раздельного туннелирования
 
-Готовые текстовые списки для раздельного туннелирования на роутере: всё, что в них, — отправлять в VPN, остальное напрямую.
+Два небольших текстовых файла для роутера (Jeton AX3000 и любой другой с AmneziaWG):
+всё, что в них, роутер отправляет в VPN, остальное идёт напрямую.
 
-## Файлы
+| Файл | Что внутри | Строк | Размер |
+|---|---|---|---|
+| `rkn-domains-lite.txt` | домены: YouTube, Telegram, Meta (Instagram/Facebook/WhatsApp), X, Discord, ИИ-сервисы, взрослые сайты и т.д. | ~290 | 8 КБ |
+| `rkn-ips.txt` | подсети только этих сервисов: официальные диапазоны Google/YouTube, Telegram, Meta, X, Discord, Cloudflare (только из реестра) | ~270 | 8 КБ |
 
-| Файл | Что внутри | Строк |
-|---|---|---|
-| `rkn-domains.txt` | домены, по одному в строке, без схем и путей | ~73 600 |
-| `rkn-ips.txt` | подсети IPv4 в формате CIDR, схлопнутые | ~18 100 |
-| `rkn-domains-lite.txt` | только крупные сервисы (YouTube, Telegram, Instagram, Discord, WhatsApp и т.д.) — для слабых роутеров | ~160 |
+Раньше здесь лежал полный дамп реестра — 79 000 доменов и 18 000 подсетей (1,6 МБ).
+Роутер его еле переваривает, а разницы в работе почти нет: заблокированные сервисы,
+которыми реально пользуются, — это список выше. Полный набор при необходимости
+собирается одной командой (`--full`, см. ниже).
 
 ## Что вырезано
 
-Казино, ставки, покер, взрослое, дейтинг, аптечная рассылка, торренты и даркнет-маркетплейсы. Остальное оставлено как есть — это выжимка реестра, а не «самые популярные сайты».
+Казино, ставки, покер, дейтинг, аптечная рассылка, торренты и даркнет-маркетплейсы.
+Взрослые сайты **оставлены** — они тоже заблокированы в РФ и должны идти в туннель.
 
-## Источники
+## Откуда данные
 
-- домены — [1andrevich/Re-filter-lists](https://github.com/1andrevich/Re-filter-lists) (`domains_all.lst`), обновляется сообществом по реестру;
-- подсети — [antifilter.download](https://antifilter.download) (`ipsum.lst`).
+- домены — [1andrevich/Re-filter-lists](https://github.com/1andrevich/Re-filter-lists) (`domains_all.lst`), выжимка реестра;
+- подсети — [antifilter.download](https://antifilter.download) (`ipsum.lst`);
+- официальные диапазоны: [goog.json](https://www.gstatic.com/ipranges/goog.json) (Google/YouTube),
+  [core.telegram.org/resources/cidr.txt](https://core.telegram.org/resources/cidr.txt) (Telegram);
+- префиксы автономных систем Meta, X, Discord, Telegram — [stat.ripe.net](https://stat.ripe.net) (RIPE RIS).
 
-Список не «истина в последней инстанции»: реестр меняется ежедневно, а часть блокировок идёт через ТСПУ без записи в реестр — такие адреса сюда не попадают.
+Список не истина в последней инстанции: реестр меняется каждый день, а часть блокировок
+идёт через ТСПУ без записи в реестр — такие адреса сюда не попадают.
 
-## Как использовать
+## Как собрать самому
 
-**Keenetic / OpenWrt / MikroTik**: загрузить домены как список для маршрутизации по домену, подсети — как список адресов. В Keenetic это «Маршруты → Списки», в OpenWrt — `ipset`/`nftset` + dnsmasq, в MikroTik — `address-list`.
+Домены удобно брать готовыми списками сервиса — [iplist.opencck.org](https://iplist.opencck.org):
 
-**dnsmasq на OpenWrt** (домены через ipset):
+1. «Формат» — **Text**, «Тип данных» — **Домены**, в поиске — `youtube`, отметить `YOUTUBE.COM`
+   → «Сохранить как файл» → «Отправить». Придёт `ip-list.txt` (~180 доменов).
+2. Галочку «Только wildcard домены» **не снимать**: в файле останутся основные домены,
+   а поддомены (`www.youtube.com`, `m.youtube.com`) роутер поймает сам. Без неё каждый
+   поддомен идёт отдельной строкой — их больше 15 000.
+3. В список YouTube попадают `google.com`, `googleapis.com`, `gstatic.com` — через VPN пойдут
+   и сервисы Google. Не нужно — удалите эти строки в любом текстовом редакторе до загрузки.
+
+Пересобрать файлы этого репозитория:
 
 ```sh
-# /etc/dnsmasq.conf
-ipset=/youtube.com/googlevideo.com/telegram.org/vpn
+python3 build.py            # компактные rkn-domains-lite.txt и rkn-ips.txt
+python3 build.py --full     # плюс полные rkn-domains.txt и rkn-ips-full.txt
 ```
 
-Списком целиком удобнее через `dnsmasq-full` + скрипт, который читает `rkn-domains.txt` и делает `nftset`.
+## Как загрузить в роутер
 
-## Обновление
+Jeton AX3000, пошагово с картинками — <https://climbproxy.site/router/>
 
-Списки собраны скриптом `build.py` (в этом же репозитории): он качает источники, нормализует, фильтрует мусор, схлопывает подсети и пишет файлы заново.
+Коротко: «SmartVPN» → «Домашние настройки SmartVPN» → «Начать» → «Amnezia WireGuard» → «Далее»,
+затем импорт белого списка доменов и белого списка IP. Файлом список грузится **только в мастере**;
+в разделе «Белый список VPN» домены добавляются по одному кнопкой «+».
 
-```sh
-python3 build.py .
-```
-
-Раз в неделю достаточно. Дату сборки смотрите в коммите.
-
-## Ссылки для роутера
-
-```
-https://raw.githubusercontent.com/svyatoslavoh/rkn-lists/main/rkn-domains.txt
-https://raw.githubusercontent.com/svyatoslavoh/rkn-lists/main/rkn-ips.txt
-https://raw.githubusercontent.com/svyatoslavoh/rkn-lists/main/rkn-domains-lite.txt
-```
+**Keenetic / OpenWrt / MikroTik**: домены — как список маршрутизации по домену
+(Keenetic: «Маршруты → Списки», OpenWrt: `ipset`/`nftset` + dnsmasq, MikroTik: `address-list`),
+подсети — как список адресов.

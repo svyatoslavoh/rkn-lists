@@ -1,10 +1,24 @@
 #!/usr/bin/env python3
-"""Сборка списков заблокированных в РФ доменов и подсетей для роутера.
+"""Сборка списков для раздельного туннелирования на роутере (компактный набор).
 
-Источники (обновляются сообществом):
-  - 1andrevich/Re-filter-lists — domains_all.lst (выжимка реестра, без мусора)
-  - antifilter.download — ipsum.lst (подсети)
-Всё нормализуется, фильтруется от казино/взрослого/фармы, дедуплицируется.
+Что собирается по умолчанию (маленькие файлы, нормально грузятся в роутер):
+
+  rkn-domains-lite.txt — домены ключевых сервисов (YouTube, Telegram, Meta,
+                          X, Discord, WhatsApp, ИИ-сервисы, взрослые сайты и т.д.)
+  rkn-ips.txt          — подсети только этих сервисов (официальные диапазоны
+                          Google/YouTube, Telegram, Meta, X, Discord, Cloudflare-край
+                          в пределах реестра)
+
+Полный набор реестра (десятки тысяч строк) собирается флагом --full:
+  rkn-domains.txt      — все домены реестра
+  rkn-ips-full.txt     — все подсети из antifilter
+
+Источники:
+  - 1andrevich/Re-filter-lists — domains_all.lst (выжимка реестра)
+  - antifilter.download — ipsum.lst (подсети реестра)
+  - gstatic goog.json — официальные диапазоны Google/YouTube
+  - core.telegram.org/resources/cidr.txt — официальные диапазоны Telegram
+  - stat.ripe.net — анонсированные префиксы AS (Meta, X, Discord, Telegram)
 """
 import ipaddress
 import json
@@ -15,8 +29,22 @@ import urllib.request
 REF_DOMAINS = "https://raw.githubusercontent.com/1andrevich/Re-filter-lists/main/domains_all.lst"
 AF_IPS = "https://antifilter.download/list/ipsum.lst"
 GOOG_JSON = "https://www.gstatic.com/ipranges/goog.json"
+TG_CIDR = "https://core.telegram.org/resources/cidr.txt"
+RIPE_ASN = "https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS{asn}"
 
-# то, что владелец просил не тащить: казино, ставки, взрослое, аптечная рассылка
+# сервисы, чьи подсети тянем целиком (ASN)
+SERVICE_ASN = {
+    32934: "Meta (Facebook, Instagram, WhatsApp, Threads)",
+    13414: "X (Twitter)",
+    49581: "Discord",
+    62041: "Telegram",
+    59930: "Telegram",
+}
+
+# Cloudflare берём не целиком (тысячи префиксов на миллионы сайтов), а только те
+# диапазоны, что попали в реестр блокировок — за ними ChatGPT, Claude и часть ИИ.
+CF_ASN = 13335
+
 JUNK = re.compile(
     r"(casino|kazino|казино|bet[0-9]|betting|bookmaker|poker|slot[sz]?[0-9-]|jackpot|roulette|"
     r"gambl|1xbet|mostbet|melbet|leonbet|pin-up|pinup|vulkan|joycasino|playfortuna|"
@@ -27,7 +55,6 @@ JUNK = re.compile(
     re.I,
 )
 
-# крупные сервисы, которые точно нужны в списке раздельного туннелирования
 CURATED = """
 youtube.com
 youtu.be
@@ -108,12 +135,28 @@ fcm.googleapis.com
 googleusercontent.com
 google-analytics.com
 googletagmanager.com
-youtubei.googleapis.com
-youtube.com
-yt3.ggpht.com
-i.ytimg.com
 google.com
 google.ru
+gemini.google.com
+aistudio.google.com
+generativelanguage.googleapis.com
+alkalimakersuite-pa.clients6.google.com
+notebooklm.google.com
+chatgpt.com
+chat.openai.com
+api.openai.com
+openai.com
+claude.ai
+api.anthropic.com
+anthropic.com
+copilot.microsoft.com
+perplexity.ai
+huggingface.co
+grok.com
+api.x.ai
+poe.com
+you.com
+deepseek.com
 pornhub.com
 xvideos.com
 xhamster.com
@@ -148,13 +191,13 @@ DOMAIN_RE = re.compile(r"^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+
 
 
 def fetch(url, timeout=180):
-    req = urllib.request.Request(url, headers={"User-Agent": "rkn-lists/1.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "rkn-lists/2.0"})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return r.read().decode("utf-8", "replace")
 
 
 def norm_domain(raw):
-    s = raw.strip().strip('"\'') .lower()
+    s = raw.strip().strip('"\'').lower()
     if not s or s.startswith("#"):
         return None
     s = re.sub(r"^[a-z]+://", "", s)
@@ -166,86 +209,129 @@ def norm_domain(raw):
     if not DOMAIN_RE.match(s):
         return None
     if any(ch.isdigit() for ch in s.split(".")[-1]):
-        return None  # IP-адрес, не домен
+        return None
     return s
 
 
-def main():
-    out_dir = sys.argv[1] if len(sys.argv) > 1 else "lists"
-
-    print("качаю домены…", flush=True)
-    dom_raw = fetch(REF_DOMAINS).splitlines()
-
-    doms, skipped_junk, skipped_bad = set(), 0, 0
-    for line in dom_raw:
-        d = norm_domain(line)
-        if not d:
-            skipped_bad += 1
-            continue
-        if JUNK.search(d):
-            skipped_junk += 1
-            continue
-        doms.add(d)
-
-    curated_added = 0
-    for d in CURATED:
-        if not JUNK.search(d) and d not in doms:
-            doms.add(d)
-            curated_added += 1
-
-    print("качаю подсети Google…", flush=True)
-    goog_nets = []
+def asn_prefixes(asn):
+    """Анонсированные IPv4-префиксы автономной системы (RIPE RIS)."""
     try:
-        data = json.loads(fetch(GOOG_JSON))
-        for pfx in data.get("prefixes") or []:
-            cidr = pfx.get("ipv4Prefix") or pfx.get("ipv6Prefix")
-            if not cidr:
-                continue
-            try:
-                net = ipaddress.ip_network(cidr, strict=False)
-            except ValueError:
-                continue
-            if net.version == 4:
-                goog_nets.append(net)
-        print(f"  диапазонов Google: {len(goog_nets)}", flush=True)
+        data = json.loads(fetch(RIPE_ASN.format(asn=asn), timeout=120))
     except Exception as e:
-        print("  не удалось получить диапазоны Google:", e, flush=True)
-
-    print("качаю подсети…", flush=True)
-    ips_raw = fetch(AF_IPS).splitlines()
-    nets = set()
-    for line in ips_raw:
-        s = line.strip().strip('"\'')
-        if not s or s.startswith("#"):
+        print(f"  AS{asn}: не удалось получить ({e})", flush=True)
+        return []
+    out = []
+    for item in data.get("data", {}).get("prefixes", []):
+        p = item.get("prefix", "")
+        if ":" in p:
             continue
         try:
-            net = ipaddress.ip_network(s, strict=False)
+            net = ipaddress.ip_network(p, strict=False)
         except ValueError:
             continue
-        if net.version != 4 or net.is_private or net.is_loopback or net.is_link_local:
-            continue
-        nets.add(net)
+        if net.version == 4 and not (net.is_private or net.is_loopback or net.is_link_local):
+            out.append(net)
+    print(f"  AS{asn}: {len(out)} префиксов", flush=True)
+    return out
 
-    nets.update(goog_nets)
 
-    def write(name, items):
-        path = f"{out_dir}/{name}"
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(items) + "\n")
-        print(f"{path}: {len(items)} строк")
+def collapse(nets):
+    return list(ipaddress.collapse_addresses(
+        sorted(set(nets), key=lambda n: (n.version, int(n.network_address), n.prefixlen))))
 
-    # схлопываем подсети: 1.2.3.0/24 + 1.2.3.0/25 → 1.2.3.0/24
-    collapsed = list(ipaddress.collapse_addresses(sorted(nets, key=lambda n: (n.version, int(n.network_address), n.prefixlen))))
 
-    write("rkn-domains.txt", sorted(doms))
-    write("rkn-ips.txt", [str(n) for n in collapsed])
+def write(path, items):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(items) + "\n")
+    print(f"{path}: {len(items)} строк", flush=True)
 
-    # компактный набор для слабых роутеров: только крупные сервисы
+
+def main():
+    out_dir = "lists"
+    full = "--full" in sys.argv
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if args:
+        out_dir = args[0]
+
+    print("качаю домены реестра…", flush=True)
+    doms, skipped_junk, skipped_bad = set(), 0, 0
+    try:
+        for line in fetch(REF_DOMAINS).splitlines():
+            d = norm_domain(line)
+            if not d:
+                skipped_bad += 1
+                continue
+            if JUNK.search(d):
+                skipped_junk += 1
+                continue
+            doms.add(d)
+    except Exception as e:
+        print("  реестр доменов недоступен:", e, flush=True)
+
+    for d in CURATED:
+        if not JUNK.search(d):
+            doms.add(d)
+
     lite = sorted(d for d in doms if any(d == c or d.endswith("." + c) for c in CURATED))
-    write("rkn-domains-lite.txt", lite)
+    # если реестр не скачался — lite всё равно соберётся из CURATED
+    print(f"  доменов всего: {len(doms)}, в компактном наборе: {len(lite)}", flush=True)
 
-    print(f"отброшено мусора: {skipped_junk}, невалидных: {skipped_bad}, "
-          f"добавлено вручную: {curated_added}")
+    print("качаю подсети реестра…", flush=True)
+    reg_nets = set()
+    try:
+        for line in fetch(AF_IPS).splitlines():
+            s = line.strip().strip('"\'')
+            if not s or s.startswith("#"):
+                continue
+            try:
+                net = ipaddress.ip_network(s, strict=False)
+            except ValueError:
+                continue
+            if net.version != 4 or net.is_private or net.is_loopback or net.is_link_local:
+                continue
+            reg_nets.add(net)
+    except Exception as e:
+        print("  реестр подсетей недоступен:", e, flush=True)
+    print(f"  подсетей в реестре: {len(reg_nets)}", flush=True)
+
+    print("качаю официальные диапазоны сервисов…", flush=True)
+    svc = []
+    try:
+        goog = json.loads(fetch(GOOG_JSON))
+        g4 = []
+        for p in goog.get("prefixes") or []:
+            if "ipv4Prefix" in p:
+                try:
+                    g4.append(ipaddress.ip_network(p["ipv4Prefix"], strict=False))
+                except ValueError:
+                    pass
+        print(f"  Google: {len(g4)}", flush=True)
+        svc += g4
+    except Exception as e:
+        print("  Google недоступен:", e, flush=True)
+    try:
+        tg = [ipaddress.ip_network(x.strip(), strict=False)
+              for x in fetch(TG_CIDR).splitlines() if x.strip() and ":" not in x]
+        print(f"  Telegram cidr.txt: {len(tg)}", flush=True)
+        svc += tg
+    except Exception as e:
+        print("  Telegram недоступен:", e, flush=True)
+    for asn in SERVICE_ASN:
+        svc += asn_prefixes(asn)
+
+    # Cloudflare только в пределах реестра — иначе в туннель уедет пол-интернета
+    cf = [n for n in asn_prefixes(CF_ASN) if any(n.overlaps(r) for r in reg_nets)]
+    print(f"  Cloudflare (только из реестра): {len(cf)}", flush=True)
+    svc += cf
+
+    write(f"{out_dir}/rkn-domains-lite.txt", lite)
+    write(f"{out_dir}/rkn-ips.txt", [str(n) for n in collapse(svc)])
+
+    if full:
+        write(f"{out_dir}/rkn-domains.txt", sorted(doms))
+        write(f"{out_dir}/rkn-ips-full.txt", [str(n) for n in collapse(reg_nets | set(svc))])
+
+    print(f"отброшено мусора: {skipped_junk}, невалидных: {skipped_bad}", flush=True)
 
 
 if __name__ == "__main__":
